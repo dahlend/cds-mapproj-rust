@@ -39,6 +39,7 @@ use std::f64::consts::SQRT_2;
 /// * `r = X/8 + Y/3 = 1 - cos(b) cos(l/2)`
 /// * `w = sqrt[(2 - r) / 2]`
 ///   ... (see algo comments)
+#[derive(Debug, Clone, Copy)]
 pub struct Ait;
 
 impl Default for Ait {
@@ -48,6 +49,8 @@ impl Default for Ait {
 }
 
 impl Ait {
+    /// Construct a new Hammer-Aitoff (equal area) projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

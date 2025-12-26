@@ -3,6 +3,7 @@
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Orthographic projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Sin;
 
 impl Default for Sin {
@@ -12,6 +13,8 @@ impl Default for Sin {
 }
 
 impl Sin {
+    /// Construct new projection
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -47,6 +50,7 @@ impl CanonicalProjection for Sin {
 }
 
 /// Slant Orthographic projection.
+#[derive(Debug, Clone)]
 pub struct SinSlant {
     xi: f64,
     eta: f64,
@@ -63,6 +67,7 @@ impl SinSlant {
     /// * `eta`: corresponds to `PV2` in WCS
     /// # Remark
     /// if `xi = eta = 0`, use `Sin` instead of `SinSlant`
+    #[must_use]
     pub fn new(xi: f64, eta: f64) -> Self {
         let tg2 = xi.pow2() + eta.pow2();
         let tmp = (1.0 + tg2).sqrt();
@@ -109,7 +114,7 @@ impl CanonicalProjection for SinSlant {
             let b = 2.0 * (rp - self.tg2);
             let c = r2 - 2.0 * rp + self.tg2 - 1.0;
             let x = (-b + (b.pow2() - 4.0 * a * c).sqrt()) / (2.0 * a);
-            let tmp = 1.0 - x;
+            let tmp: f64 = 1.0 - x;
             Some(XYZ::new(x, x2d - self.xi * tmp, y2d - self.eta * tmp))
         } else {
             None

@@ -1,3 +1,4 @@
+//! Test SIN projections
 use mapproj::{
     img2celestial::Img2Celestial, img2proj::WcsImgXY2ProjXY, zenithal::sin::Sin,
     CenteredProjection, ImgXY, LonLat,
@@ -5,7 +6,7 @@ use mapproj::{
 
 #[test]
 fn test_sin() {
-    // Test fomr the foloowing FITS cards
+    // Test for the following FITS cards
     /*
     CTYPE1  = 'RA---SIN'
     CTYPE2  = 'DEC--SIN'

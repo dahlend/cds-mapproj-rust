@@ -3,6 +3,7 @@
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Stereographic projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Stg;
 
 impl Default for Stg {
@@ -12,6 +13,8 @@ impl Default for Stg {
 }
 
 impl Stg {
+    /// Construct new projection
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

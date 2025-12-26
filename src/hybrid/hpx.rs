@@ -1,18 +1,19 @@
 //! HEALPix projection.
 
-use std::f64::consts::PI;
+use std::f64::consts::{FRAC_PI_2, FRAC_PI_4, PI};
 
-use crate::math::HALF_PI;
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Mask to keep only the f64 sign
 pub const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
-/// Equals !F64_SIGN_BIT_MASK (the inverse of the f64 sign mask)
+
+/// Equals ``!F64_SIGN_BIT_MASK`` (the inverse of the f64 sign mask)
 pub const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
 
 /// Limit on |z|=|sin(lat)| between the equatorial region and the polar caps.
 /// Equals 2/3, see Eq. (1) in Gorsky2005.
 pub const TRANSITION_Z: f64 = 2_f64 / 3_f64;
+
 /// Inverse of the limit on |z|=|sin(lat)| between the equatorial region and the polar caps.
 /// Equals 1/(2/3) = 1.5, see Eq. (1) in Gorsky2005.
 pub const ONE_OVER_TRANSITION_Z: f64 = 1.5_f64;
@@ -22,10 +23,11 @@ const EPS_POLE: f64 = 1e-13_f64;
 
 const ONE_OVER_SQRT6: f64 = 0.408_248_290_463_863_f64;
 
-pub const PI_OVER_FOUR: f64 = PI / 4.0;
+/// 4 / pi
 pub const FOUR_OVER_PI: f64 = 4.0 / PI;
 
 /// HEALPix projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Hpx;
 
 impl Default for Hpx {
@@ -35,6 +37,8 @@ impl Default for Hpx {
 }
 
 impl Hpx {
+    /// Construct a new HEALPix projection
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -45,7 +49,8 @@ impl CanonicalProjection for Hpx {
     const WCS_NAME: &'static str = "HPX";
 
     fn bounds(&self) -> &ProjBounds {
-        const PROJ_BOUNDS: ProjBounds = ProjBounds::new(Some(-PI..=PI), Some(-HALF_PI..=HALF_PI));
+        const PROJ_BOUNDS: ProjBounds =
+            ProjBounds::new(Some(-PI..=PI), Some(-FRAC_PI_2..=FRAC_PI_2));
         &PROJ_BOUNDS
     }
 
@@ -59,22 +64,22 @@ impl CanonicalProjection for Hpx {
             let (x_pm1, offset) = xpm1_and_offset(xyz.x, xyz.y);
             let sqrt_3_one_min_z = (3.0 * one_minus_z_pos(xyz)).sqrt();
             Some(ProjXY::new(
-                ((x_pm1 * sqrt_3_one_min_z) + offset as f64) * PI_OVER_FOUR,
-                (2.0 - sqrt_3_one_min_z) * PI_OVER_FOUR,
+                ((x_pm1 * sqrt_3_one_min_z) + f64::from(offset)) * FRAC_PI_4,
+                (2.0 - sqrt_3_one_min_z) * FRAC_PI_4,
             ))
         } else if xyz.z < -TRANSITION_Z {
             // South polar cap, Collignon projection
             let (x_pm1, offset) = xpm1_and_offset(xyz.x, xyz.y);
             let sqrt_3_one_min_z = (3.0 * one_minus_z_neg(xyz)).sqrt();
             Some(ProjXY::new(
-                ((x_pm1 * sqrt_3_one_min_z) + offset as f64) * PI_OVER_FOUR,
-                (-2.0 + sqrt_3_one_min_z) * PI_OVER_FOUR,
+                ((x_pm1 * sqrt_3_one_min_z) + f64::from(offset)) * FRAC_PI_4,
+                (-2.0 + sqrt_3_one_min_z) * FRAC_PI_4,
             ))
         } else {
             // Equatorial region, Cylindrical equal area projection
             Some(ProjXY::new(
                 xyz.y.atan2(xyz.x),
-                xyz.z * ONE_OVER_TRANSITION_Z * PI_OVER_FOUR,
+                xyz.z * ONE_OVER_TRANSITION_Z * FRAC_PI_4,
             ))
         }
     }
@@ -85,7 +90,7 @@ impl CanonicalProjection for Hpx {
     fn unproj(&self, pos: &ProjXY) -> Option<XYZ> {
         let mut z = pos.y * FOUR_OVER_PI;
         let x = pos.x * FOUR_OVER_PI;
-        if !(-2f64..=2f64).contains(&z) || !(-4f64..4f64).contains(&x) {
+        if !(-2_f64..=2_f64).contains(&z) || !(-4_f64..4_f64).contains(&x) {
             None
         } else if z > 1.0 {
             // North polar cap
@@ -94,7 +99,7 @@ impl CanonicalProjection for Hpx {
             if (2.0 - z) >= pm1.abs() {
                 deproj_collignon(&mut pm1, &mut z);
                 apply_offset_and_signs(&mut pm1, offset, x.sign);
-                pm1 *= PI_OVER_FOUR;
+                pm1 *= FRAC_PI_4;
                 let (sinb, cosb) = z.sin_cos();
                 let (sinl, cosl) = pm1.sin_cos();
                 Some(XYZ::new(cosl * cosb, sinl * cosb, sinb))
@@ -109,7 +114,7 @@ impl CanonicalProjection for Hpx {
             if (2.0 - z) >= pm1.abs() {
                 deproj_collignon(&mut pm1, &mut z);
                 apply_offset_and_signs(&mut pm1, offset, x.sign);
-                pm1 *= PI_OVER_FOUR;
+                pm1 *= FRAC_PI_4;
                 let (sinb, cosb) = (-z).sin_cos();
                 let (sinl, cosl) = pm1.sin_cos();
                 Some(XYZ::new(cosl * cosb, sinl * cosb, sinb))
@@ -127,10 +132,9 @@ impl CanonicalProjection for Hpx {
 }
 
 fn xpm1_and_offset(x: f64, y: f64) -> (f64, i8) {
-    let x_neg = (x < 0.0) as i8;
-    debug_assert!(x_neg == 0 || x_neg == 1);
-    let y_neg = (y < 0.0) as i8;
-    debug_assert!(y_neg == 0 || y_neg == 1);
+    let x_neg = i8::from(x < 0.0);
+    let y_neg = i8::from(y < 0.0);
+
     // x>0, y>0 => [    0,  pi/2[ => offset =  1
     // x<0, y>0 => [pi/2 ,    pi[ => offset =  3
     // x<0, y<0 => [3pi/2,    pi[ => offset = -3
@@ -140,11 +144,12 @@ fn xpm1_and_offset(x: f64, y: f64) -> (f64, i8) {
     debug_assert!((0.0..=PI / 2.0).contains(&lon));
     let x02 = lon * FOUR_OVER_PI;
     debug_assert!((0.0..=2.0).contains(&x02));
-    if x_neg != y_neg {
+
+    if x_neg == y_neg {
+        (x02 - 1.0, offset)
+    } else {
         // Could be replaced by a sign copy from (x_neg ^ y_neg) << 32
         (1.0 - x02, offset)
-    } else {
-        (x02 - 1.0, offset)
     }
 }
 
@@ -171,8 +176,10 @@ fn one_minus_z_neg(xyz: &XYZ) -> f64 {
     }
 }
 
-// Returns the absolute value of the given double together with its bit of sign
+/// Returns the absolute value of the given double together with its bit of sign
 struct AbsAndSign {
+    // TODO: This struct and all function which use it may be replaced with more direct rust functions.
+    // f64::copysign can replace half of the [`apply_offset_and_signs`] function for example.
     abs: f64,
     sign: u64,
 }
@@ -193,10 +200,10 @@ struct OffsetAndPM1 {
 }
 fn pm1_offset_decompose(x: f64) -> OffsetAndPM1 {
     let floor: u8 = x as u8;
-    let odd_floor: u8 = floor | 1u8;
+    let odd_floor: u8 = floor | 1_u8;
     OffsetAndPM1 {
-        offset: odd_floor & 7u8, // value modulo 8
-        pm1: x - (odd_floor as f64),
+        offset: odd_floor & 7_u8, // value modulo 8
+        pm1: x - f64::from(odd_floor),
     }
 }
 
@@ -209,7 +216,7 @@ fn deproj_collignon(lon: &mut f64, lat: &mut f64) {
     } // in case of pole, lon = lat = 0 (we avoid NaN due to division by lat=0)
     *lat *= ONE_OVER_SQRT6;
     // Using acos is OK here since lat < 1/sqrt(6), so not near from 1.
-    *lat = 2.0 * (f64::acos(*lat) - PI_OVER_FOUR);
+    *lat = 2.0 * (f64::acos(*lat) - FRAC_PI_4);
 }
 
 fn is_not_near_from_pole(sqrt_of_three_time_one_minus_sin_of: f64) -> bool {
@@ -223,6 +230,6 @@ fn deal_with_numerical_approx_in_edges(lon: &mut f64) {
 
 // Shift x by the given offset and apply lon sign to x
 pub(crate) fn apply_offset_and_signs(lon: &mut f64, off: u8, lon_sign: u64) {
-    *lon += off as f64;
+    *lon += f64::from(off);
     *lon = f64::from_bits(f64::to_bits(*lon) | lon_sign);
 }

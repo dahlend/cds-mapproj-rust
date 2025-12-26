@@ -5,6 +5,7 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 const D_MAX: f64 = 1.6580627893946132; // 95.0_f64.to_radians();
 
 /// Fisheye projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Feye;
 
 impl Default for Feye {
@@ -14,6 +15,8 @@ impl Default for Feye {
 }
 
 impl Feye {
+    /// Construct new Fisheye projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

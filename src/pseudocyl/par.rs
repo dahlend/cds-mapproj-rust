@@ -4,9 +4,12 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 use std::f64::consts::PI;
 
 /// Parabolic projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Par;
 
 impl Par {
+    /// Construct a new Parabolic projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

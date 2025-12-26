@@ -4,6 +4,7 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 use std::f64::consts::PI;
 
 /// Mercator projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Mer;
 
 impl Default for Mer {
@@ -13,6 +14,8 @@ impl Default for Mer {
 }
 
 impl Mer {
+    /// Construct a new Mercator Projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

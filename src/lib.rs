@@ -1,3 +1,5 @@
+//! Map projection conversions
+use core::f64;
 use std::{f64::consts::PI, ops::RangeInclusive};
 
 pub mod img2celestial;
@@ -14,7 +16,8 @@ pub mod zenithal;
 pub use math::CustomFloat;
 
 /// Equatorial coordinates.
-#[derive(Debug, Clone, PartialEq)]
+/// Longitude and Latitude in radians.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LonLat {
     lon: f64,
     lat: f64,
@@ -25,22 +28,27 @@ impl LonLat {
     /// * No test performed so far to ensure that
     ///     + `lon` in `[0, 2pi[`
     ///     + `lat` in `[-pi/2, pi/2]`
+    #[must_use]
     pub fn new(lon: f64, lat: f64) -> Self {
         // TODO: perform checks here!
         Self { lon, lat }
     }
 
     /// Get the longitude
+    #[must_use]
     pub fn lon(&self) -> f64 {
         self.lon
     }
 
     /// Get the latitude
+    #[must_use]
     pub fn lat(&self) -> f64 {
         self.lat
     }
 
     /// Transform into Euclidean coordinates
+    ///
+    #[must_use]
     pub fn to_xyz(&self) -> XYZ {
         let (sinl, cosl) = self.lon.sin_cos();
         let (sinb, cosb) = self.lat.sin_cos();
@@ -48,7 +56,8 @@ impl LonLat {
     }
 
     /// Compute the `Haversine` angular distance (adapterd for small distances but not for very large distance).
-    pub fn haversine_dist(&self, rhs: &LonLat) -> f64 {
+    #[must_use]
+    pub fn haversine_dist(&self, rhs: &Self) -> f64 {
         let shs = squared_half_segment(
             rhs.lon - self.lon,
             rhs.lat - self.lat,
@@ -85,39 +94,47 @@ pub struct XYZ {
 }
 impl XYZ {
     /// We assume the norm of the input vector is 1.
+    #[must_use]
     pub fn new(x: f64, y: f64, z: f64) -> Self {
-        debug_assert!((-1.0..=1.0).contains(&x), "x: {}; y: {}; z: {}", x, y, z);
-        debug_assert!((-1.0..=1.0).contains(&y), "y: {}; y: {}; z: {}", x, y, z);
-        debug_assert!((-1.0..=1.0).contains(&z), "x: {}; y: {}; z: {}", x, y, z);
-        debug_assert!((1.0 - (x.pow2() + y.pow2() + z.pow2())).abs() < 1e-15);
+        debug_assert!((-1.0..=1.0).contains(&x), "x: {x}; y: {y}; z: {z}");
+        debug_assert!((-1.0..=1.0).contains(&y), "y: {x}; y: {y}; z: {z}");
+        debug_assert!((-1.0..=1.0).contains(&z), "x: {x}; y: {y}; z: {z}");
+        debug_assert!(
+            (1.0 - (x.pow2() + y.pow2() + z.pow2())).abs() < 1e-15,
+            "x: {x}; y: {y}; z: {z}"
+        );
         Self { x, y, z }
     }
 
     /// Renormalize the input parameters to ensure the norm of the vector equals 1.
+    #[must_use]
     pub fn new_renorming_if_necessary(x: f64, y: f64, z: f64) -> Self {
         let n = (x.pow2() + y.pow2() + z.pow2()).sqrt();
-        if !(0.99999999999999..=1.0).contains(&n) {
+        if (0.99999999999999..=1.0).contains(&n) {
+            Self { x, y, z }
+        } else {
             Self {
                 x: x / n,
                 y: y / n,
                 z: z / n,
             }
-        } else {
-            Self { x, y, z }
         }
     }
 
     /// Get the x coordinate
+    #[must_use]
     pub fn x(&self) -> f64 {
         self.x
     }
 
     /// Get the y coordinate
+    #[must_use]
     pub fn y(&self) -> f64 {
         self.y
     }
 
     /// Get the z coordinate
+    #[must_use]
     pub fn z(&self) -> f64 {
         self.z
     }
@@ -134,57 +151,60 @@ impl XYZ {
     }
 
     /// Compute the dot product of this vector with the given vector
-    pub fn scalar(&self, rhs: &XYZ) -> f64 {
+    #[must_use]
+    pub fn scalar(&self, rhs: &Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
 /// X, Y coordinates in an image
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ImgXY {
     x: f64,
     y: f64,
 }
+
 impl ImgXY {
     /// New image coordinates fo (x, y).
+    #[must_use]
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
 
     /// Get the x coordinate
+    #[must_use]
     pub fn x(&self) -> f64 {
         self.x
     }
 
     /// Get the y coordinate
+    #[must_use]
     pub fn y(&self) -> f64 {
         self.y
     }
 }
 
-/*
-/// Intermediate World coordinates.
-pub struct InterXY {
-  x: f64,
-  y: f64,
-}*/
-
 /// X, Y coordinates in the 2D projection plane
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ProjXY {
     x: f64,
     y: f64,
 }
 impl ProjXY {
+    /// Construct new X, Y coordinates in the projection plane.
+    #[must_use]
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
 
     /// Get the x coordinate
+    #[must_use]
     pub fn x(&self) -> f64 {
         self.x
     }
 
     /// Get the y coordinate
+    #[must_use]
     pub fn y(&self) -> f64 {
         self.y
     }
@@ -224,22 +244,26 @@ pub trait Projection {
 /// The X and Y ranges bounds of a projection in the Euclidean projection plane.
 #[derive(Debug, Clone)]
 pub struct ProjBounds {
+    // TODO: Consider removing the Option and using -inf and +inf for unbounded.
     x: Option<RangeInclusive<f64>>,
     y: Option<RangeInclusive<f64>>,
 }
 
 impl ProjBounds {
     /// Create a new projection bounds.
+    #[must_use]
     const fn new(x: Option<RangeInclusive<f64>>, y: Option<RangeInclusive<f64>>) -> Self {
         Self { x, y }
     }
 
     /// Returns the bounds of a projection along the x-axis (`None` mean unbounded).
+    #[must_use]
     pub fn x_bounds(&self) -> &Option<RangeInclusive<f64>> {
         &self.x
     }
 
     /// Returns the bounds of a projection along the y-axis (`None` mean unbounded).
+    #[must_use]
     pub fn y_bounds(&self) -> &Option<RangeInclusive<f64>> {
         &self.y
     }
@@ -250,6 +274,7 @@ impl ProjBounds {
 pub trait CanonicalProjection {
     /// Full projection name
     const NAME: &'static str;
+
     /// WCS projection name (3 characters)
     const WCS_NAME: &'static str;
 
@@ -295,6 +320,7 @@ impl<T: CanonicalProjection> Projection for T {
 
 /// Structure performing a rotation (due to non-vernal projection origin)
 /// before projecting/after deprojecting.
+#[derive(Debug, Clone, Copy)]
 pub struct CenteredProjection<T: CanonicalProjection> {
     // Parameters of the rotation matrix
     r11: f64,
@@ -327,6 +353,8 @@ impl<T: CanonicalProjection> CenteredProjection<T> {
         }
     }
 
+    /// Return the wrapped inner projection
+    #[must_use]
     pub fn inner_proj(&self) -> &T {
         &self.proj
     }

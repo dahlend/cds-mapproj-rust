@@ -7,13 +7,17 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 static HALF_PI: f64 = 0.5 * PI;
 
 /// Airy projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Air {
     /// Angular distance (in radians) from the proj center at which error is minimized
     rho_b: f64,
+
     /// Precomputed constant deriving from `rho_b`
     cte_b: f64,
+
     /// Max number of iteration for the Newton-Raphson iterative method.
     n_iter: u8,
+
     /// Precision for the Newton-Raphson iterative method
     eps: f64,
 }
@@ -25,6 +29,8 @@ impl Default for Air {
 }
 
 impl Air {
+    /// Construct a new Airy projection.
+    #[must_use]
     pub fn new() -> Self {
         Self::from_param(HALF_PI)
     }
@@ -34,6 +40,7 @@ impl Air {
     ///   angular distance from the proj center at which error is minimized
     /// # Panics
     /// * if `rho_b` no in `]0, pi[`
+    #[must_use]
     pub fn from_param(rho_b: f64) -> Self {
         let xb = rho_b.cos();
         assert!(xb.abs() < 1.0, "In AIR, angle must be in ]0, pi[");
@@ -48,6 +55,7 @@ impl Air {
     }
 
     /// Get the value of the `rho_b` parameter.
+    #[must_use]
     pub fn rho_b(&self) -> f64 {
         self.rho_b
     }
@@ -86,7 +94,7 @@ impl Air {
             sqrt_1_m_x = x_m_1.sqrt();
             sqrt_1p_1m = -sqrt_1_p_x / sqrt_1_m_x;
             i += 1;
-            f = sqrt_1p_1m * ln + (self.cte_b / sqrt_1p_1m) - big_r
+            f = sqrt_1p_1m * ln + (self.cte_b / sqrt_1p_1m) - big_r;
         }
         x
     }
@@ -114,7 +122,7 @@ impl CanonicalProjection for Air {
             // Compute R/sin(rho): r over sin rho
             debug_assert!(1.0 - xyz.x > 0.0, "1 - x must be > 0");
             let r_o_sr = (0.5 * x_p_1).ln() / (xyz.x - 1.0) - (self.cte_b / x_p_1);
-            debug_assert!(r_o_sr >= 0.0, "r: {} < 0", r_o_sr);
+            debug_assert!(r_o_sr >= 0.0, "r: {r_o_sr} < 0");
             Some(ProjXY::new(xyz.y * r_o_sr, xyz.z * r_o_sr))
         }
     }

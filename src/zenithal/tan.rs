@@ -3,6 +3,7 @@
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Gnomonic projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Tan;
 
 impl Default for Tan {
@@ -12,6 +13,8 @@ impl Default for Tan {
 }
 
 impl Tan {
+    /// Construct new projection
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

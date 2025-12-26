@@ -4,6 +4,7 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 use std::f64::consts::PI;
 
 /// Zenithal (or azimuthal) equidistant projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Arc;
 
 impl Default for Arc {
@@ -13,6 +14,8 @@ impl Default for Arc {
 }
 
 impl Arc {
+    /// Construct a new Zenithal (or azimuthal) equidistant projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

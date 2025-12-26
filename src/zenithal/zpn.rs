@@ -32,6 +32,7 @@ impl Zpn {
     /// * `coeffs`: polynomial coefficients provided by keywords PVi_1a, PVi_2a, ..., PVi_na
     /// # Return
     /// * `None` if negative polynomial en `[0, pi]`
+    #[must_use]
     pub fn from_params(coeffs: Vec<f64>) -> Option<Self> {
         let eps = (1.0_f64 / (60.0_f64 * 60.0 * 1000.0)).to_radians(); // <=> 1 mas ~= 5e-9 radians
         let step = (1.0_f64 / 60.0).to_radians(); // <=> 1 arcmin
@@ -47,6 +48,7 @@ impl Zpn {
     ///   (this value is also assigned to the `epsilon` used in deprojection.
     /// # Return
     /// * `None` if negative polynomial en `[0, pi]`
+    #[must_use]
     pub fn from_params_custom(coeffs: Vec<f64>, domain_step: f64, domain_eps: f64) -> Option<Self> {
         let p = coeffs.into_boxed_slice();
         // Set constants
@@ -110,33 +112,33 @@ impl Zpn {
         if euc_dist_deriv < 0.0 {
             // "Negative derivative of the polynomial at distance"
             return None;
+        }
+
+        // By dichotomy
+        // - find the first value for which the derivative become negative
+        let mut min = ang_dist_min;
+        let mut max = ang_dist_min + domain_step;
+        let mut max_val = dpolynomial(max, &p);
+        while max_val > 0.0 && max < PI {
+            max += domain_step;
+            max_val = dpolynomial(max, &p);
+        }
+        if max_val >= 0.0 {
+            // No change of sign found
+            min = PI;
         } else {
-            // By dichotomy
-            // - find the first value for which the derivative become negative
-            let mut min = ang_dist_min;
-            let mut max = ang_dist_min + domain_step;
-            let mut max_val = dpolynomial(max, &p);
-            while max_val > 0.0 && max < PI {
-                max += domain_step;
-                max_val = dpolynomial(max, &p);
-            }
-            if max_val >= 0.0 {
-                // No change of sign found
-                min = PI;
-            } else {
-                // Dichotomy to find the point in which the derivative becomes null
-                while (max - min) > domain_eps {
-                    let med = (max + min).half();
-                    let med_val = dpolynomial(med, &p);
-                    if med_val <= 0.0 {
-                        max = med;
-                    } else {
-                        min = med;
-                    }
+            // Dichotomy to find the point in which the derivative becomes null
+            while (max - min) > domain_eps {
+                let med = (max + min).half();
+                let med_val = dpolynomial(med, &p);
+                if med_val <= 0.0 {
+                    max = med;
+                } else {
+                    min = med;
                 }
             }
-            ang_dist_max = min;
         }
+        ang_dist_max = min;
         let euc_dist_max = polynomial(ang_dist_max, &p);
         // Build struct
         Some(Self {
@@ -340,7 +342,7 @@ impl CanonicalProjection for Zpn {
 ///   `p0 + p1 x + p2 x^2 + p3 x^3 + p4 x^4`
 fn polynomial(x: f64, p: &[f64]) -> f64 {
     let mut it = p.iter().rev();
-    let init = it.next().cloned().unwrap_or(0.0);
+    let init = it.next().copied().unwrap_or(0.0);
     it.fold(init, move |acc, coeff| acc * x + *coeff)
 }
 
@@ -350,10 +352,7 @@ fn polynomial(x: f64, p: &[f64]) -> f64 {
 ///   `p1 + 2 p2 x + 3 p3 x^2 + 4 p4 x^3`
 fn dpolynomial(x: f64, p: &[f64]) -> f64 {
     let mut it = p.iter().enumerate().skip(1).rev();
-    let init = it
-        .next()
-        .map(|(i, coeff)| (i as f64) * coeff)
-        .unwrap_or(0.0);
+    let init = it.next().map_or(0.0, |(i, coeff)| (i as f64) * coeff);
     it.fold(init, move |acc, (i, coeff)| acc * x + (i as f64) * *coeff)
 }
 

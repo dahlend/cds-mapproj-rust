@@ -7,9 +7,11 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 static HALF_PI: f64 = 0.5 * PI;
 
 /// Mollweide projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Mol {
     /// Max number of iteration for the Newton-Raphson iterative method.
     n_iter: u8,
+
     /// Precision for the Newton-Raphson iterative method.
     eps: f64,
 }
@@ -21,6 +23,8 @@ impl Default for Mol {
 }
 
 impl Mol {
+    /// Construct a new Mollweide projection.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             n_iter: 100,
@@ -106,6 +110,7 @@ impl CanonicalProjection for Mol {
                     Some(XYZ::new(r * cosl, r * sinl, z))
                 } else {
                     // Should not happen!
+                    // TODO: maybe convert this to unreachable!() or panic!()
                     None
                 }
             }

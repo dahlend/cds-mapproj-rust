@@ -1,32 +1,40 @@
 //! Utility module defining a few mathematical functions like sinc (sinus cardinal = sin(x) / x).
 
-use std::f64::consts::PI;
-
-pub const HALF_PI: f64 = 0.5 * PI;
-
+/// Add new functions to f64
 pub trait CustomFloat {
     /// `2 * x`
-    fn twice(self) -> f64;
+    #[must_use]
+    fn twice(self) -> Self;
+
     /// `x / 2`
-    fn half(self) -> f64;
+    #[must_use]
+    fn half(self) -> Self;
+
     /// Square: `x^2`
+    #[must_use]
     fn pow2(self) -> Self;
+
     /// Cardinal sine, i.e. `sin(x) / x`
+    #[must_use]
     fn sinc(self) -> Self;
+
     /// Cardinal arcsine, i.e. `asin(x) / x`.  
+    #[must_use]
     fn asinc(self) -> Self;
+
     /// Hyperbolic inverse tangent, i.e. `tanh-1(x)`.
     /// # Warning
     /// * return `Nan` if the value is in `]-1, 1[`.
-    fn atanh(self) -> f64;
+    #[must_use]
+    fn atanh(self) -> Self;
 }
 
 impl CustomFloat for f64 {
-    fn twice(self) -> f64 {
-        2.0 * self // self + self (I hope the compiler know the simple shift bit to be used for x2)
+    fn twice(self) -> Self {
+        2.0 * self // self + self
     }
 
-    fn half(self) -> f64 {
+    fn half(self) -> Self {
         0.5 * self
     }
 
@@ -56,7 +64,7 @@ impl CustomFloat for f64 {
         }
     }
 
-    fn atanh(self) -> f64 {
+    fn atanh(self) -> Self {
         0.5 * ((1.0 + self) / (1.0 - self)).ln()
     }
 }

@@ -6,7 +6,7 @@ pub mod coe;
 pub mod coo;
 pub mod cop;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 struct Conic {
     /// Parameters `ThetaA` (in radians)
     ta: f64,

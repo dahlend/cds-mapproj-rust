@@ -1,10 +1,8 @@
 //! Conic Equidistant projection.
 
-use std::f64::consts::PI;
+use std::f64::consts::{FRAC_PI_2, PI};
 
-use crate::{
-    conic::Conic, math::HALF_PI, CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ,
-};
+use crate::{conic::Conic, CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Conic Equidistant projection.
 #[derive(Debug, Clone)]
@@ -25,17 +23,20 @@ impl Default for Cod {
 }
 
 impl Cod {
-    // default theta1 = theta2 = 45 deg
+    /// Default theta1 = theta2 = 45 deg
+    #[must_use]
     pub fn new() -> Self {
-        Self::from_params(HALF_PI.half(), 0.0)
+        Self::from_params(FRAC_PI_2.half(), 0.0)
     }
 
+    #[must_use]
+    /// Construct from provided `theta_a` and `nu` parameters.
     pub fn from_params(theta_a: f64, nu: f64) -> Self {
         let conic = Conic::from_params(theta_a, nu);
         let sin_ta = conic.ta.sin();
         let cot_ta = 1.0 / conic.ta.tan();
         let (c, y0) = if conic.nu == 0.0 {
-            debug_assert_eq!(conic.theta1, conic.theta2);
+            debug_assert_eq!(conic.theta1, conic.theta2, "Angles must match");
             (sin_ta, cot_ta)
         } else {
             let sin_nu = conic.nu.sin();
@@ -46,9 +47,9 @@ impl Cod {
         };
         let ta_plus_y0 = conic.ta + y0;
         let (r_min, r_max) = if ta_plus_y0 >= 0.0 {
-            (ta_plus_y0 - HALF_PI, ta_plus_y0 + HALF_PI)
+            (ta_plus_y0 - FRAC_PI_2, ta_plus_y0 + FRAC_PI_2)
         } else {
-            (ta_plus_y0 + HALF_PI, ta_plus_y0 - HALF_PI)
+            (ta_plus_y0 + FRAC_PI_2, ta_plus_y0 - FRAC_PI_2)
         };
         let yrange = if conic.negative_ta {
             Some(y0 - r_max * (PI * c).cos().abs()..=y0 + r_max)

@@ -4,17 +4,23 @@ use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 use std::f64::consts::PI;
 
 /// Cylindrical perspective projection.
+#[derive(Debug, Clone)]
 pub struct Cyp {
     /// `mu` parameter.
     mu: f64,
+
     /// `lambda` parameter.
     lambda: f64,
+
     /// pre-computed value `mu + lambda`
     lpm: f64,
+
     /// pre-compute `PI * lambda`
     pi_x_lambda: f64,
+
     /// pre-computed `1 + lambda / mu`
     lpm_over_mu: f64,
+
     /// pre-computed projection bounds
     proj_bounds: ProjBounds,
 }
@@ -26,6 +32,8 @@ impl Default for Cyp {
 }
 
 impl Cyp {
+    /// Construct a new Cylindrical perspective projection
+    #[must_use]
     pub fn new() -> Self {
         Self::from_params(1.0, 0.5 * 2.0_f64.sqrt())
     }
@@ -33,6 +41,7 @@ impl Cyp {
     /// # Params
     /// * `mu`: keyword `PVi_1a`.
     /// * `lambda`: keyword `PVi_2a`.
+    #[must_use]
     pub fn from_params(mu: f64, lambda: f64) -> Self {
         let pi_x_lambda = PI * lambda;
         let lpm_over_mu = (mu + lambda) / mu;

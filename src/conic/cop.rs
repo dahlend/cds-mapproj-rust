@@ -1,12 +1,11 @@
 //! Conic perspective projection.
 
-use std::f64::consts::PI;
+use std::f64::consts::{FRAC_PI_2, PI};
 
-use crate::{
-    conic::Conic, math::HALF_PI, CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ,
-};
+use crate::{conic::Conic, CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Conic perspective projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Cop {
     conic: Conic,
     c: f64,
@@ -27,11 +26,14 @@ impl Default for Cop {
 }
 
 impl Cop {
-    // default theta1 = theta2 = 45 deg
+    /// Construct with default theta1 = theta2 = 45 deg
+    #[must_use]
     pub fn new() -> Self {
-        Self::from_params(HALF_PI.half(), 0.0)
+        Self::from_params(FRAC_PI_2.half(), 0.0)
     }
 
+    /// Construct from provided `theta_a` and `nu` parameters.
+    #[must_use]
     pub fn from_params(theta_a: f64, nu: f64) -> Self {
         let conic = Conic::from_params(theta_a, nu);
         let (sin_ta, cos_ta) = conic.ta.sin_cos();
@@ -41,9 +43,9 @@ impl Cop {
         let cos_nu = conic.nu.cos();
         let y0 = cos_nu * cotan_ta;
         let (z_min, z_max) = if conic.ta >= 0.0 {
-            ((-HALF_PI + conic.ta).sin(), 1.0)
+            ((-FRAC_PI_2 + conic.ta).sin(), 1.0)
         } else {
-            (-1.0, (HALF_PI + conic.ta).sin())
+            (-1.0, (FRAC_PI_2 + conic.ta).sin())
         };
         Self {
             conic,

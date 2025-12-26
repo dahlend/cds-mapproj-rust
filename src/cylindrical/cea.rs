@@ -6,11 +6,15 @@ use std::f64::consts::PI;
 /// Cylindrical equal area projection.
 /// With default value `lambda = 1`, this projection is a
 /// Lambert's Cylindrical or Lambert's Equal Area projection.
+#[derive(Debug, Clone)]
 pub struct Cea {
-    // Parameters
+    /// Parameters
     lambda: f64,
-    // Derived quantity
+
+    /// Derived quantity
     one_over_lambda: f64,
+
+    /// Projection bounds
     proj_bounds: ProjBounds,
 }
 
@@ -21,6 +25,8 @@ impl Default for Cea {
 }
 
 impl Cea {
+    /// Construct a new Cylindrical Equal Area projection
+    #[must_use]
     pub fn new() -> Self {
         Self::from_param(1.0)
     }
@@ -29,8 +35,12 @@ impl Cea {
     /// * `lambda`: correspond to the WCS `PVi_1a` parameter
     /// # Panics
     /// * if `lambda = 0` or is not finite.
+    #[must_use]
     pub fn from_param(lambda: f64) -> Self {
-        assert!(lambda != 0.0 && lambda.is_finite());
+        assert!(
+            lambda != 0.0 && lambda.is_finite(),
+            "lambda must finite and not zero"
+        );
         let one_over_lambda = 1.0 / lambda;
         Self {
             lambda,

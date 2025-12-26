@@ -8,6 +8,7 @@ static HALF_PI: f64 = 0.5 * PI;
 static EPSILON: f64 = 1e-15;
 
 /// Slant zenithal perspective projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Szp {
     /// Keyword PVi_1a.
     mu: f64, // 0.0
@@ -39,22 +40,27 @@ impl Default for Szp {
 }
 
 impl Szp {
+    /// Construct new projection
+    #[must_use]
     pub fn new() -> Self {
         // Self::from_params(2.0, PI, 2.0 * HALF_PI / 3.0)
         Self::from_params(0.0, 0.0, HALF_PI)
     }
 
     /// Get the value of the `mu` parameter.
+    #[must_use]
     pub fn mu(&self) -> f64 {
         self.mu
     }
 
     /// Get the value of the `phi` parameter.
+    #[must_use]
     pub fn phi(&self) -> f64 {
         self.phi
     }
 
     /// Get the value of the `theta` parameter.
+    #[must_use]
     pub fn theta(&self) -> f64 {
         self.theta
     }
@@ -66,6 +72,7 @@ impl Szp {
     /// # Panics
     /// * if `mu` not a finite number
     /// * if `theta` not in `[-PI/2, PI/2]`
+    #[must_use]
     pub fn from_params(mu: f64, phi: f64, theta: f64) -> Self {
         assert!(mu.is_finite());
         assert!((-HALF_PI..=HALF_PI).contains(&theta));
@@ -103,6 +110,8 @@ impl Szp {
         }
     }
 
+    /// Check if position is inside of projection bounds
+    #[must_use]
     pub fn is_in_proj_bounds(&self, xyz: &XYZ) -> bool {
         // We use epsilon instead of 0 to avoid points close to the divergence
         if self.abs_mu <= 1.0 {

@@ -1,11 +1,11 @@
 //! Conic Equal Area projection.
 
-use std::f64::consts::PI;
+use std::f64::consts::{FRAC_PI_2, PI};
 
-use crate::math::HALF_PI;
 use crate::{conic::Conic, CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Conic Equal Area projection.
+#[derive(Debug, Clone)]
 pub struct Coe {
     conic: Conic,
     one_plus_sint1_sint2: f64,
@@ -25,11 +25,14 @@ impl Default for Coe {
 }
 
 impl Coe {
-    // default theta1 = theta2 = 45 deg
+    /// Construct default theta1 = theta2 = 45 deg
+    #[must_use]
     pub fn new() -> Self {
-        Self::from_params(HALF_PI.half(), 0.0)
+        Self::from_params(FRAC_PI_2.half(), 0.0)
     }
 
+    #[must_use]
+    /// Construct from provided `theta_a` and `nu` parameters.
     pub fn from_params(theta_a: f64, nu: f64) -> Self {
         let conic = Conic::from_params(theta_a, nu);
         let sin_t1 = conic.theta1.sin();

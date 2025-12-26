@@ -3,6 +3,7 @@
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// Lambert's zenithal (or azimuthal) equal area projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Zea;
 
 impl Default for Zea {
@@ -12,6 +13,8 @@ impl Default for Zea {
 }
 
 impl Zea {
+    /// Construct new projection
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

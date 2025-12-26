@@ -2,6 +2,7 @@
 use crate::{CanonicalProjection, CustomFloat, ProjBounds, ProjXY, XYZ};
 
 /// North Celestial Pole orthographic projection.
+#[derive(Debug, Clone, Copy)]
 pub struct Ncp;
 
 impl Default for Ncp {
@@ -11,6 +12,8 @@ impl Default for Ncp {
 }
 
 impl Ncp {
+    /// Construct new North Celestial Pole orthographic projection.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

@@ -28,7 +28,8 @@ pub trait ImgXY2ProjXY {
     fn inverse(&self) -> Self::T;
 }
 
-#[derive(Clone)]
+/// Image to Projected plane conversion
+#[derive(Debug, Clone, Copy)]
 pub struct BasicImgXY2ProjXY {
     /// Projection x-axis coordinate at the image X-axis center.
     center_px: f64,
@@ -53,19 +54,20 @@ impl BasicImgXY2ProjXY {
     /// # Params
     /// * `img_size`: `(size_x, size_y)` number of pixels in each dimension
     /// * `proj_bounds`: `(bounds_x, bounds_y)` boundaries of the projection domain
+    #[must_use]
     pub fn from(
         img_size: (u16, u16),
         proj_bounds: (&RangeInclusive<f64>, &RangeInclusive<f64>),
     ) -> Self {
         // x-axis
-        let img_size_x = img_size.0 as f64;
+        let img_size_x = f64::from(img_size.0);
         let center_x = 0.5 * (img_size_x - 1.0);
         let xp_min = proj_bounds.0.start();
         let xp_max = proj_bounds.0.end();
         let scale_x = (xp_max - xp_min) / img_size_x;
         let center_px = 0.5 * (xp_max + xp_min);
         // y-axis
-        let img_size_y = img_size.1 as f64;
+        let img_size_y = f64::from(img_size.1);
         let center_y = 0.5 * (img_size_y - 1.0);
         let yp_min = proj_bounds.1.start();
         let yp_max = proj_bounds.1.end();
@@ -93,7 +95,7 @@ impl ImgXY2ProjXY for BasicImgXY2ProjXY {
     }
 
     fn inverse(&self) -> Self::T {
-        self.clone()
+        *self
     }
 }
 
@@ -106,19 +108,21 @@ impl ProjXY2ImgXY for BasicImgXY2ProjXY {
 }
 
 /// Specific implementation for PNG (top left origin) with East towards the left.
-#[derive(Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ReversedEastPngImgXY2ProjXY {
     y_img_max: f64,
     b: BasicImgXY2ProjXY,
 }
 
 impl ReversedEastPngImgXY2ProjXY {
+    ///
+    #[must_use]
     pub fn from(
         img_size: (u16, u16),
         proj_bounds: (&RangeInclusive<f64>, &RangeInclusive<f64>),
     ) -> Self {
         Self {
-            y_img_max: (img_size.1 - 1) as f64,
+            y_img_max: f64::from(img_size.1 - 1),
             b: BasicImgXY2ProjXY::from(img_size, proj_bounds),
         }
     }
@@ -135,7 +139,7 @@ impl ImgXY2ProjXY for ReversedEastPngImgXY2ProjXY {
     }
 
     fn inverse(&self) -> Self::T {
-        self.clone()
+        *self
     }
 }
 
@@ -151,7 +155,7 @@ impl ProjXY2ImgXY for ReversedEastPngImgXY2ProjXY {
 /// in the projection plane.
 /// The three constructors are each associated with one of the three convention
 /// describe in the FITS paper: CDij, CDELTi + PCij, CDELTi + CROTA2.
-#[derive(Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct WcsImgXY2ProjXY {
     /// Translation vector (in pixel units, so no units).
     crpix1: f64,
@@ -172,6 +176,7 @@ impl WcsImgXY2ProjXY {
     /// * `cd12`: value of the `CD12` keyword (element of a rotation + scale matrix) in degrees, use 0 as default value
     /// * `cd21`: value of the `CD21` keyword (element of a rotation + scale matrix) in degrees, use 0 as default value
     /// * `cd22`: value of the `CD22` keyword (element of a rotation + scale matrix) in degrees, use 1 as default value
+    #[must_use]
     pub fn from_cd(crpix1: f64, crpix2: f64, cd11: f64, cd12: f64, cd21: f64, cd22: f64) -> Self {
         Self {
             crpix1,
@@ -192,7 +197,8 @@ impl WcsImgXY2ProjXY {
     /// * `pc22`: value of the `PC22` keyword (element of a rotation matrix, no units), use 1 as default value
     /// * `cdelt1`: value of the `CDELT1` keyword, in degrees
     /// * `cdelt2`: value of the `CDELT2` keyword, in degrees
-    #[allow(clippy::too_many_arguments)]
+    #[must_use]
+    #[allow(clippy::too_many_arguments, reason = "Unavoidable complexity")]
     pub fn from_pc(
         crpix1: f64,
         crpix2: f64,
@@ -219,6 +225,7 @@ impl WcsImgXY2ProjXY {
     /// * `crota2`: value of the `CROTA2` keyword, in degrees
     /// * `cdelt1`: value of the `CDELT1` keyword, in degrees
     /// * `cdelt2`: value of the `CDELT2` keyword, in degrees
+    #[must_use]
     pub fn from_cr(crpix1: f64, crpix2: f64, crota2: f64, cdelt1: f64, cdelt2: f64) -> Self {
         let (sinc, cosc) = crota2.to_radians().sin_cos();
         Self::from_cd(
@@ -268,6 +275,7 @@ impl ImgXY2ProjXY for WcsImgXY2ProjXY {
 /// in the projection plane.
 /// The three constructors are each associated with one of the three convention
 /// describe in the FITS paper: CDij, CDELTi + PCij, CDELTi + CROTA2.
+#[derive(Debug, Clone)]
 pub struct WcsWithSipImgXY2ProjXY {
     /// Regular transformation
     wcs: WcsImgXY2ProjXY,
@@ -277,6 +285,7 @@ pub struct WcsWithSipImgXY2ProjXY {
 
 impl WcsWithSipImgXY2ProjXY {
     /// Add SIP convention to a regular WCS transformation.
+    #[must_use]
     pub fn new(wcs: WcsImgXY2ProjXY, sip: Sip) -> Self {
         Self { wcs, sip }
     }
@@ -313,6 +322,8 @@ impl ImgXY2ProjXY for WcsWithSipImgXY2ProjXY {
     }
 }
 
+/// WCS projected XY to Image XY
+#[derive(Debug, Clone, Copy)]
 pub struct WcsProjXY2ImgXY {
     /// Translation vector (in pixel units, so no units).
     crpix1: f64,
@@ -332,9 +343,12 @@ impl ProjXY2ImgXY for WcsProjXY2ImgXY {
     }
 }
 
+/// WCS with SIP projected to image XY
+#[derive(Debug, Clone)]
 pub struct WcsWithSipProjXY2ImgXY {
     /// Regular transformation
     wcs: WcsProjXY2ImgXY,
+
     /// SIP transformation
     sip: Sip,
 }

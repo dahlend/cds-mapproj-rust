@@ -140,7 +140,7 @@ fn xpm1_and_offset(x: f64, y: f64) -> (f64, i8) {
   // x>0, y<0 => [pi   , 3pi/2[ => offset = -1
   let offset = ((-y_neg) << 2) + 1 + ((x_neg ^ y_neg) << 1);
   let lon = y.abs().atan2(x.abs());
-  debug_assert!((0.0..=PI / 2.0).contains(&lon));
+  debug_assert!((0.0..=FRAC_PI_2).contains(&lon));
   let x02 = lon * FOUR_OVER_PI;
   debug_assert!((0.0..=2.0).contains(&x02));
 

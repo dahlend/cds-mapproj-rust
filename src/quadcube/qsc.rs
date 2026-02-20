@@ -1,7 +1,7 @@
 //! Quadrilateralized spherical cube projection.
 
 use crate::{CanonicalProjection, ProjBounds, ProjXY, XYZ};
-use std::f64::consts::{FRAC_1_SQRT_2, PI};
+use std::f64::consts::{FRAC_1_SQRT_2, FRAC_PI_2, PI};
 
 const TOL: f64 = 1.0e-12;
 
@@ -45,7 +45,7 @@ impl CanonicalProjection for Qsc {
     let lat = xyz.z.asin();
 
     // Handle poles specially
-    if lat.abs() == PI / 2.0 {
+    if lat.abs() == FRAC_PI_2 {
       let x = 0.0;
       let y = lat.signum() * 2.0 * self.w0;
       return Some(ProjXY::new(x, y));
@@ -103,7 +103,7 @@ impl CanonicalProjection for Qsc {
         let eta = n;
         let zeco_adj = if zeco < 1.0e-8 {
           let t = lat;
-          let p = xyz.y.atan2(xyz.x) - PI / 2.0;
+          let p = xyz.y.atan2(xyz.x) - FRAC_PI_2;
           (p.mul_add(p, t * t)) / 2.0
         } else {
           zeco
@@ -128,7 +128,7 @@ impl CanonicalProjection for Qsc {
         let eta = n;
         let zeco_adj = if zeco < 1.0e-8 {
           let t = lat;
-          let p = xyz.y.atan2(xyz.x) + PI / 2.0;
+          let p = xyz.y.atan2(xyz.x) + FRAC_PI_2;
           (p.mul_add(p, t * t)) / 2.0
         } else {
           zeco
@@ -139,7 +139,7 @@ impl CanonicalProjection for Qsc {
         let xi = m;
         let eta = l;
         let zeco_adj = if zeco < 1.0e-8 {
-          let t = lat + PI / 2.0;
+          let t = lat + FRAC_PI_2;
           t * t / 2.0
         } else {
           zeco
@@ -151,7 +151,7 @@ impl CanonicalProjection for Qsc {
         let xi = m;
         let eta = -l;
         let zeco_adj = if zeco < 1.0e-8 {
-          let t = PI / 2.0 - lat;
+          let t = FRAC_PI_2 - lat;
           t * t / 2.0
         } else {
           zeco
